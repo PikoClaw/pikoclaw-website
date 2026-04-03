@@ -1,848 +1,530 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PikoClaw - Ultra Lightweight AI Agent for Developers</title>
     <meta name="description" content="High-performance AI agent written in Rust. Ultra lightweight (~6-7 MB) and blazing fast. Build, code, and automate with the power of Claude.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', '"Fira Code"', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                    },
+                    animation: {
+                        'gradient': 'gradient 8s ease infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        html { scroll-behavior: smooth; }
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 25%, #fbbf24 50%, #fb923c 75%, #f97316 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 6s ease infinite;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-orange {
+            box-shadow: 0 0 60px rgba(249, 115, 22, 0.15);
+        }
+        .hero-grid {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        .code-block {
+            background: linear-gradient(180deg, #0d0d0d 0%, #111111 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .border-glow {
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+        .feature-card-hover:hover {
+            border-color: rgba(249, 115, 22, 0.4);
+            box-shadow: 0 0 40px rgba(249, 115, 22, 0.08);
+            transform: translateY(-4px);
+        }
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
         }
-
-        :root {
-            --primary: #ff6b35;
-            --primary-dark: #e85a2a;
-            --secondary: #004e89;
-            --dark: #1a1a2e;
-            --light: #f5f5f5;
-            --accent: #00d9ff;
-            --rust: #ce422b;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, var(--dark) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 20px 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-emoji {
-            font-size: 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent);
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--dark) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 150px 0 100px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="none" stroke="%23ffffff" stroke-width="0.5" opacity="0.1" x="0" y="0" width="100" height="100"/></svg>');
-            opacity: 0.1;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            font-weight: 800;
-            line-height: 1.2;
-        }
-
-        .hero .tagline {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-
-        .badges {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .badge {
-            background: rgba(255,255,255,0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 15px 35px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-            display: inline-block;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn-secondary:hover {
-            background: white;
-            color: var(--secondary);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 100px 0;
-            background: white;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: var(--dark);
-        }
-
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 60px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            margin-top: 50px;
-        }
-
-        .feature-card {
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-            border: 1px solid #e0e0e0;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: var(--secondary);
-        }
-
-        .feature-card p {
-            color: #666;
-            line-height: 1.8;
-        }
-
-        /* Stats Section */
-        .stats {
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--dark) 100%);
-            color: white;
-            padding: 80px 0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 40px;
-            text-align: center;
-        }
-
-        .stat-item h3 {
-            font-size: 3rem;
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
-
-        .stat-item p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        /* Tools Section */
-        .tools {
-            padding: 100px 0;
-            background: var(--light);
-        }
-
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 50px;
-        }
-
-        .tool-item {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .tool-item h4 {
-            color: var(--secondary);
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
-
-        .tool-item p {
-            color: #666;
-            font-size: 0.95rem;
-        }
-
-        /* Installation Section */
-        .installation {
-            padding: 100px 0;
-            background: white;
-        }
-
-        .install-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            padding: 12px 30px;
-            background: var(--light);
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .tab-btn.active {
-            background: var(--secondary);
-            color: white;
-            border-color: var(--secondary);
-        }
-
-        .tab-content {
-            display: none;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        pre {
-            background: var(--dark);
-            color: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        code {
-            font-family: 'Courier New', monospace;
-        }
-
-        /* Architecture Section */
-        .architecture {
-            padding: 100px 0;
-            background: var(--light);
-        }
-
-        .arch-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 50px;
-        }
-
-        .arch-item {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-top: 4px solid var(--rust);
-        }
-
-        .arch-item h4 {
-            color: var(--rust);
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
-
-        .arch-item p {
-            color: #666;
-            font-size: 0.95rem;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 100px 0;
-            text-align: center;
-        }
-
-        .cta-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-
-        .cta-section p {
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-            opacity: 0.95;
-        }
-
-        /* Footer */
-        footer {
-            background: var(--dark);
-            color: white;
-            padding: 40px 0;
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .footer-links a:hover {
-            opacity: 1;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero .tagline {
-                font-size: 1.2rem;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .features-grid,
-            .tools-grid,
-            .arch-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .install-tabs {
-                flex-direction: column;
-            }
-        }
-
-        /* Animations */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .fade-in-up {
-            animation: fadeInUp 0.8s ease-out;
+        .animate-on-scroll {
+            opacity: 0;
         }
+        .animate-on-scroll.is-visible {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        /* Tab styles */
+        .tab-btn.active {
+            color: #f97316;
+            border-color: rgba(249, 115, 22, 0.4);
+            background: rgba(249, 115, 22, 0.05);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body>
+<body class="bg-[#0a0a0a] text-white font-sans antialiased">
+
+    <!-- Background gradient -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-brand-600/8 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] animate-pulse-slow"></div>
+    </div>
+
     <!-- Header -->
-    <header>
-        <nav class="container">
-            <div class="logo">
-                <span class="logo-emoji">🦀</span>
-                <span>PikoClaw</span>
+    <header class="fixed top-0 w-full z-50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-xl rounded-b-xl">
+                <a href="/" class="flex items-center gap-2.5">
+                                        <span class="text-lg font-semibold tracking-tight">PikoClaw</span>
+                </a>
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-sm text-zinc-400 hover:text-white transition-colors">Features</a>
+                    <a href="#tools" class="text-sm text-zinc-400 hover:text-white transition-colors">Tools</a>
+                    <a href="#install" class="text-sm text-zinc-400 hover:text-white transition-colors">Install</a>
+                    <a href="#architecture" class="text-sm text-zinc-400 hover:text-white transition-colors">Architecture</a>
+                    <a href="https://github.com/PikoClaw/PikoClaw" target="_blank" class="text-zinc-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
+                </nav>
             </div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#tools">Tools</a></li>
-                <li><a href="#install">Install</a></li>
-                <li><a href="#architecture">Architecture</a></li>
-                <li><a href="https://github.com/PikoClaw/PikoClaw" target="_blank">GitHub</a></li>
-            </ul>
-        </nav>
+        </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container hero-content fade-in-up">
-            <h1>PikoClaw</h1>
-            <p class="tagline">Ultra Lightweight AI Agent for Developers</p>
-            <p>High-performance AI coding assistant written in Rust.<br>Blazing fast. Incredibly small. Powerful beyond measure.</p>
-            
-            <div class="badges">
-                <span class="badge">🚀 Blazing Fast</span>
-                <span class="badge">🪶 ~6-7 MB</span>
-                <span class="badge">🦀 Written in Rust</span>
-                <span class="badge">🎯 Claude Powered</span>
-                <span class="badge">🌐 Cross-Platform</span>
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center hero-grid overflow-hidden">
+        <div class="max-w-4xl mx-auto px-6 pt-32 pb-24 text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-sm text-zinc-300 mb-8">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                Ultra lightweight AI agent written in Rust
             </div>
 
-            <div class="cta-buttons">
-                <a href="#install" class="btn btn-primary">Get Started</a>
-                <a href="https://github.com/PikoClaw/PikoClaw" class="btn btn-secondary" target="_blank">View on GitHub</a>
+            <h1 class="text-5xl sm:text-7xl lg:text-8xl font-bold tracking-tight leading-[0.95] mb-6">
+                Code at the<br>
+                <span class="gradient-text">speed of thought</span>
+            </h1>
+
+            <p class="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                High-performance AI coding assistant. Blazing fast. Incredibly small.
+                Build, code, and automate with the power of Claude.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+                <a href="#install" class="group inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm rounded-lg transition-all duration-200 shadow-lg shadow-brand-600/20 hover:shadow-brand-500/30">
+                    Get Started
+                    <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+                <a href="https://github.com/PikoClaw/PikoClaw" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 text-zinc-300 hover:text-white font-medium text-sm rounded-lg glass hover:bg-white/10 transition-all duration-200">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    View on GitHub
+                </a>
+            </div>
+
+            <!-- Install command -->
+            <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg code-block">
+                <code class="text-sm font-mono text-zinc-300">brew install pikoclaw</code>
+                <button onclick="navigator.clipboard.writeText('brew install pikoclaw')" class="text-zinc-500 hover:text-zinc-300 transition-colors ml-2" title="Copy">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+            </div>
+
+            <!-- Badges -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-10">
+                <span class="px-3 py-1 rounded-full text-xs font-mono text-zinc-400 border border-white/10 bg-white/5">~6 MB</span>
+                <span class="px-3 py-1 rounded-full text-xs font-mono text-zinc-400 border border-white/10 bg-white/5">Rust</span>
+                <span class="px-3 py-1 rounded-full text-xs font-mono text-zinc-400 border border-white/10 bg-white/5">Claude API</span>
+                <span class="px-3 py-1 rounded-full text-xs font-mono text-zinc-400 border border-white/10 bg-white/5">macOS / Linux / Windows</span>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <h3>~6 MB</h3>
-                    <p>Binary Size</p>
+    <!-- Stats -->
+    <section class="relative z-10 border-y border-white/5">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+                <div class="text-center">
+                    <div class="text-4xl sm:text-5xl font-bold font-mono text-white mb-2">~6 MB</div>
+                    <div class="text-sm text-zinc-500">Binary Size</div>
                 </div>
-                <div class="stat-item">
-                    <h3>11+</h3>
-                    <p>Built-in Tools</p>
+                <div class="text-center">
+                    <div class="text-4xl sm:text-5xl font-bold font-mono text-white mb-2">11+</div>
+                    <div class="text-sm text-zinc-500">Built-in Tools</div>
                 </div>
-                <div class="stat-item">
-                    <h3>10</h3>
-                    <p>Rust Crates</p>
+                <div class="text-center">
+                    <div class="text-4xl sm:text-5xl font-bold font-mono text-white mb-2">10</div>
+                    <div class="text-sm text-zinc-500">Rust Crates</div>
                 </div>
-                <div class="stat-item">
-                    <h3>3</h3>
-                    <p>Platforms</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">Why PikoClaw?</h2>
-            <p class="section-subtitle">Built for developers who demand performance and simplicity</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Blazing Fast</h3>
-                    <p>Written in Rust for maximum performance. No bloat, no overhead. Just pure speed that lets you code at the speed of thought.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🪶</div>
-                    <h3>Ultra Lightweight</h3>
-                    <p>Only 6-7 MB binary size. Download once, use anywhere. No heavy dependencies or runtime requirements.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Beautiful TUI</h3>
-                    <p>Gorgeous terminal interface with multiple themes. Dark, light, accessible, and ANSI variants for every preference.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Powerful Tools</h3>
-                    <p>11+ built-in tools including Bash, file operations, web search, Jupyter notebooks, and more. Everything you need in one package.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Permission Control</h3>
-                    <p>Fine-grained permission system. Control exactly what the AI can do with configurable rules and policies.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💾</div>
-                    <h3>Session Management</h3>
-                    <p>Resume conversations seamlessly. Continue where you left off with full context preservation.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3>Cross-Platform</h3>
-                    <p>Works on macOS, Linux, and Windows. One codebase, consistent experience everywhere.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🤖</div>
-                    <h3>Claude Integration</h3>
-                    <p>Powered by Anthropic's Claude AI with support for Sonnet, Opus, and Haiku models. Switch models on the fly.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Model Context Protocol</h3>
-                    <p>Built-in MCP client for extensibility. Connect to external tools and services effortlessly.</p>
+                <div class="text-center">
+                    <div class="text-4xl sm:text-5xl font-bold font-mono text-white mb-2">3</div>
+                    <div class="text-sm text-zinc-500">Platforms</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Tools Section -->
-    <section id="tools" class="tools">
-        <div class="container">
-            <h2 class="section-title">Built-in Tools</h2>
-            <p class="section-subtitle">Everything you need for development, out of the box</p>
-            
-            <div class="tools-grid">
-                <div class="tool-item">
-                    <h4>🖥️ Bash</h4>
-                    <p>Execute shell commands with full control</p>
+    <!-- Features -->
+    <section id="features" class="relative z-10 py-24">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Why PikoClaw?</h2>
+                <p class="text-zinc-400 text-lg">Built for developers who demand performance and simplicity</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Blazing Fast</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Written in Rust for maximum performance. No bloat, no overhead. Pure speed at the speed of thought.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>📖 Read</h4>
-                    <p>Read files with line numbers and offsets</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 0L9 5m3 3h8"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Ultra Lightweight</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Only 6-7 MB binary size. Download once, use anywhere. No heavy dependencies or runtime requirements.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>✍️ Write</h4>
-                    <p>Create and overwrite files with ease</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Beautiful TUI</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Gorgeous terminal interface with multiple themes. Dark, light, accessible, and ANSI variants.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>✏️ Edit</h4>
-                    <p>Exact string replacement in files</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Powerful Tools</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">11+ built-in tools including Bash, file operations, web search, Jupyter notebooks, and more.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>🔍 Glob</h4>
-                    <p>Find files by pattern matching</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Permission Control</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Fine-grained permission system. Control exactly what the AI can do with configurable policies.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>🔎 Grep</h4>
-                    <p>Search file contents with regex</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Session Management</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Resume conversations seamlessly. Continue where you left off with full context preservation.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>🌐 WebFetch</h4>
-                    <p>Fetch and extract text from URLs</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Cross-Platform</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Works on macOS, Linux, and Windows. One codebase, consistent experience everywhere.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>🔎 WebSearch</h4>
-                    <p>Web search via Anthropic beta API</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Claude Powered</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Powered by Anthropic's Claude AI with support for Sonnet, Opus, and Haiku models. Switch on the fly.</p>
                 </div>
-                <div class="tool-item">
-                    <h4>📓 NotebookEdit</h4>
-                    <p>Edit Jupyter notebook cells</p>
-                </div>
-                <div class="tool-item">
-                    <h4>✅ TodoWrite</h4>
-                    <p>In-session task checklist management</p>
-                </div>
-                <div class="tool-item">
-                    <h4>❓ AskUserQuestion</h4>
-                    <p>Interactive multiple-choice prompts</p>
-                </div>
-                <div class="tool-item">
-                    <h4>🤖 Agent</h4>
-                    <p>Spawn isolated sub-agents for complex tasks</p>
+
+                <div class="animate-on-scroll p-6 rounded-xl glass feature-card-hover transition-all duration-300">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 flex items-center justify-center mb-4">
+                        <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">MCP Support</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Built-in MCP client for extensibility. Connect to external tools and services effortlessly.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Installation Section -->
-    <section id="install" class="installation">
-        <div class="container">
-            <h2 class="section-title">Get Started in Seconds</h2>
-            <p class="section-subtitle">Choose your platform and install</p>
-            
-            <div class="install-tabs">
-                <button class="tab-btn active" onclick="showTab('macos')">🍎 macOS</button>
-                <button class="tab-btn" onclick="showTab('linux')">🐧 Linux</button>
-                <button class="tab-btn" onclick="showTab('windows')">🪟 Windows</button>
+    <!-- Tools -->
+    <section id="tools" class="relative z-10 py-24 border-t border-white/5">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Built-in Tools</h2>
+                <p class="text-zinc-400 text-lg">Everything you need for development, out of the box</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Bash</div>
+                    <div class="text-xs text-zinc-500">Shell commands</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Read</div>
+                    <div class="text-xs text-zinc-500">Read files</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Write</div>
+                    <div class="text-xs text-zinc-500">Create files</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Edit</div>
+                    <div class="text-xs text-zinc-500">String replace</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Glob</div>
+                    <div class="text-xs text-zinc-500">File patterns</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Grep</div>
+                    <div class="text-xs text-zinc-500">Regex search</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">WebFetch</div>
+                    <div class="text-xs text-zinc-500">Fetch URLs</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">WebSearch</div>
+                    <div class="text-xs text-zinc-500">Web search</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">NotebookEdit</div>
+                    <div class="text-xs text-zinc-500">Jupyter cells</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">TodoWrite</div>
+                    <div class="text-xs text-zinc-500">Task checklist</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">AskUser</div>
+                    <div class="text-xs text-zinc-500">Interactive prompts</div>
+                </div>
+                <div class="animate-on-scroll p-4 rounded-lg glass hover:border-brand-500/30 transition-all duration-200 cursor-default">
+                    <div class="text-sm font-medium mb-1">Agent</div>
+                    <div class="text-xs text-zinc-500">Sub-agents</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Install -->
+    <section id="install" class="relative z-10 py-24 border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Get Started in Seconds</h2>
+                <p class="text-zinc-400 text-lg">Choose your platform and install</p>
+            </div>
+
+            <div class="flex items-center justify-center gap-3 mb-8">
+                <button class="tab-btn active px-4 py-2 text-sm rounded-lg border border-white/10 text-zinc-400 glass transition-all" onclick="showTab('macos')">macOS</button>
+                <button class="tab-btn px-4 py-2 text-sm rounded-lg border border-white/10 text-zinc-400 glass transition-all" onclick="showTab('linux')">Linux</button>
+                <button class="tab-btn px-4 py-2 text-sm rounded-lg border border-white/10 text-zinc-400 glass transition-all" onclick="showTab('windows')">Windows</button>
             </div>
 
             <div id="macos" class="tab-content active">
-                <pre><code># Install via Homebrew
+                <div class="code-block rounded-xl p-5">
+                    <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Install via Homebrew</span>
 brew tap PikoClaw/pikoclaw
 brew install pikoclaw
 
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
+<span class="text-zinc-500"># Set your API key</span>
+<span class="text-brand-400">export</span> ANTHROPIC_API_KEY=sk-ant-...
 
-# Start coding!
+<span class="text-zinc-500"># Start coding!</span>
 pikoclaw</code></pre>
+                </div>
             </div>
 
             <div id="linux" class="tab-content">
-                <pre><code># Download and install
+                <div class="code-block rounded-xl p-5">
+                    <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Download and install</span>
 curl -L https://github.com/PikoClaw/PikoClaw/releases/latest/download/pikoclaw-linux-x86_64 -o pikoclaw
 chmod +x pikoclaw
 sudo mv pikoclaw /usr/local/bin/
 
-# Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
+<span class="text-zinc-500"># Set your API key</span>
+<span class="text-brand-400">export</span> ANTHROPIC_API_KEY=sk-ant-...
 
-# Start coding!
+<span class="text-zinc-500"># Start coding!</span>
 pikoclaw</code></pre>
+                </div>
             </div>
 
             <div id="windows" class="tab-content">
-                <pre><code># Download from GitHub Releases
-# https://github.com/PikoClaw/PikoClaw/releases
+                <div class="code-block rounded-xl p-5">
+                    <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Download from GitHub Releases</span>
+<span class="text-zinc-500"># https://github.com/PikoClaw/PikoClaw/releases</span>
 
-# Move to your bin directory
-Move-Item pikoclaw-windows-x86_64.exe "$env:USERPROFILE\bin\pikoclaw.exe"
+<span class="text-zinc-500"># Move to your bin directory</span>
+Move-Item pikoclaw-windows-x86_64.exe "<span class="text-brand-400">$env:USERPROFILE\bin\pikoclaw.exe</span>"
 
-# Set your API key
-$env:ANTHROPIC_API_KEY="sk-ant-..."
+<span class="text-zinc-500"># Set your API key</span>
+<span class="text-brand-400">$env:</span>ANTHROPIC_API_KEY="sk-ant-..."
 
-# Start coding!
+<span class="text-zinc-500"># Start coding!</span>
 pikoclaw</code></pre>
+                </div>
             </div>
 
-            <div style="text-align: center; margin-top: 40px;">
-                <a href="https://github.com/PikoClaw/PikoClaw/releases" class="btn btn-primary" target="_blank">
-                    Download Latest Release
+            <div class="text-center mt-8">
+                <a href="https://github.com/PikoClaw/PikoClaw/releases" target="_blank" class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-brand-400 transition-colors">
+                    View all releases
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Architecture Section -->
-    <section id="architecture" class="architecture">
-        <div class="container">
-            <h2 class="section-title">Clean Architecture</h2>
-            <p class="section-subtitle">Modular Rust workspace with 10 specialized crates</p>
-            
-            <div class="arch-grid">
-                <div class="arch-item">
-                    <h4>piko-types</h4>
-                    <p>Core domain types and data structures</p>
+    <!-- Architecture -->
+    <section id="architecture" class="relative z-10 py-24 border-t border-white/5">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Clean Architecture</h2>
+                <p class="text-zinc-400 text-lg">Modular Rust workspace with 10 specialized crates</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div class="animate-on-scroll p-4 rounded-lg glass border-glow">
+                    <div class="text-sm font-mono font-medium text-brand-400 mb-1">piko-types</div>
+                    <div class="text-xs text-zinc-500">Core domain types</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-config</h4>
-                    <p>Configuration file and environment loading</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-config</div>
+                    <div class="text-xs text-zinc-500">Config loading</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-api</h4>
-                    <p>Anthropic API client with SSE streaming</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-api</div>
+                    <div class="text-xs text-zinc-500">API client + SSE</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-tools</h4>
-                    <p>Tool trait and built-in implementations</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-tools</div>
+                    <div class="text-xs text-zinc-500">Tool implementations</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-permissions</h4>
-                    <p>Permission policy engine</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-permissions</div>
+                    <div class="text-xs text-zinc-500">Permission engine</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-session</h4>
-                    <p>Session persistence and resume logic</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-session</div>
+                    <div class="text-xs text-zinc-500">Session persistence</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-agent</h4>
-                    <p>Core agent loop and orchestration</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-agent</div>
+                    <div class="text-xs text-zinc-500">Core agent loop</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-mcp</h4>
-                    <p>Model Context Protocol client</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-mcp</div>
+                    <div class="text-xs text-zinc-500">MCP client</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-tui</h4>
-                    <p>Ratatui interactive terminal UI</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-tui</div>
+                    <div class="text-xs text-zinc-500">Terminal UI</div>
                 </div>
-                <div class="arch-item">
-                    <h4>piko-skills</h4>
-                    <p>Slash command registry and dispatcher</p>
+                <div class="animate-on-scroll p-4 rounded-lg glass">
+                    <div class="text-sm font-mono font-medium text-zinc-200 mb-1">piko-skills</div>
+                    <div class="text-xs text-zinc-500">Slash commands</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <h2>Ready to Code Faster?</h2>
-            <p>Join developers who are building better software with PikoClaw</p>
-            <div class="cta-buttons">
-                <a href="#install" class="btn" style="background: white; color: var(--primary);">Install Now</a>
-                <a href="https://github.com/PikoClaw/PikoClaw" class="btn btn-secondary" target="_blank">Star on GitHub</a>
+    <!-- CTA -->
+    <section class="relative z-10 py-32 border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-6 text-center">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ready to Code Faster?</h2>
+            <p class="text-zinc-400 text-lg mb-10">Join developers who are building better software with PikoClaw</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#install" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm rounded-lg transition-all duration-200 shadow-lg shadow-brand-600/20">
+                    Install Now
+                </a>
+                <a href="https://github.com/PikoClaw/PikoClaw" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 text-zinc-300 hover:text-white font-medium text-sm rounded-lg glass hover:bg-white/10 transition-all duration-200">
+                    Star on GitHub
+                </a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="https://github.com/PikoClaw/PikoClaw" target="_blank">GitHub</a>
-                <a href="https://github.com/PikoClaw/PikoClaw/releases" target="_blank">Releases</a>
-                <a href="https://github.com/PikoClaw/PikoClaw/blob/main/LICENSE" target="_blank">License</a>
-                <a href="https://github.com/PikoClaw/PikoClaw/blob/main/STATUS.md" target="_blank">Status</a>
+    <footer class="relative z-10 border-t border-white/5 py-8">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2.5">
+                <span class="text-sm text-zinc-500">&copy; 2026 PikoClaw. Apache 2.0</span>
             </div>
-            <p>&copy; 2026 PikoClaw. Licensed under Apache 2.0. Built with 🦀 Rust.</p>
+            <div class="flex items-center gap-6">
+                <a href="https://github.com/PikoClaw/PikoClaw" target="_blank" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">GitHub</a>
+                <a href="https://github.com/PikoClaw/PikoClaw/releases" target="_blank" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Releases</a>
+                <a href="https://github.com/PikoClaw/PikoClaw/blob/main/LICENSE" target="_blank" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">License</a>
+                <a href="https://github.com/PikoClaw/PikoClaw/blob/main/STATUS.md" target="_blank" class="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">Status</a>
+            </div>
         </div>
     </footer>
 
     <script>
         function showTab(platform) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected tab
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(platform).classList.add('active');
             event.target.classList.add('active');
         }
 
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    const offsetTop = target.offsetTop - 80;
-                    window.scrollTo({
-                        top: offsetTop,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-
-        // Add animation on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
+        // Intersection observer for scroll animations
+        const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.8s ease-out';
+                    entry.target.classList.add('is-visible');
                 }
             });
-        }, observerOptions);
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
-        document.querySelectorAll('.feature-card, .tool-item, .arch-item').forEach(el => {
+        document.querySelectorAll('.animate-on-scroll').forEach((el, i) => {
+            el.style.animationDelay = `${(i % 6) * 80}ms`;
             observer.observe(el);
         });
     </script>
