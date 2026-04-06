@@ -78,6 +78,12 @@
         .code-block {
             background: linear-gradient(180deg, #0d0d0d 0%, #111111 100%);
             border: 1px solid rgba(255,255,255,0.08);
+            overflow-x: auto;
+        }
+        .code-block pre {
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         .border-glow {
             border: 1px solid rgba(249, 115, 22, 0.2);
@@ -108,6 +114,21 @@
         }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        /* Copy button animation */
+        .copy-btn {
+            transition: all 0.2s ease;
+        }
+        .copy-btn.copied {
+            color: #10b981 !important;
+            transform: scale(1.1);
+        }
+        .copy-btn.copied svg {
+            animation: bounce 0.5s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
     </style>
 </head>
 <body class="bg-[#0a0a0a] text-white font-sans antialiased">
@@ -175,7 +196,7 @@
             <!-- Install command -->
             <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-lg code-block">
                 <code class="text-sm font-mono text-zinc-300">curl -fsSL https://pikoclaw.com/install.sh | bash</code>
-                <button onclick="navigator.clipboard.writeText('curl -fsSL https://pikoclaw.com/install.sh | bash')" class="text-zinc-500 hover:text-zinc-300 transition-colors ml-2" title="Copy">
+                <button onclick="copyToClipboard('curl -fsSL https://pikoclaw.com/install.sh | bash', this)" class="copy-btn text-zinc-500 hover:text-zinc-300 transition-colors ml-2" title="Copy">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
             </div>
@@ -385,6 +406,12 @@
 
             <div id="macos" class="tab-content active">
                 <div class="code-block rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-zinc-500 font-mono">macOS</span>
+                        <button onclick="copyToClipboard('brew tap PikoClaw/pikoclaw\nbrew install pikoclaw\nexport ANTHROPIC_API_KEY=sk-ant-...\npikoclaw', this)" class="copy-btn text-zinc-500 hover:text-zinc-300 transition-colors" title="Copy">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                    </div>
                     <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Install via Homebrew</span>
 brew tap PikoClaw/pikoclaw
 brew install pikoclaw
@@ -399,6 +426,12 @@ pikoclaw</code></pre>
 
             <div id="linux" class="tab-content">
                 <div class="code-block rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-zinc-500 font-mono">Linux</span>
+                        <button onclick="copyToClipboard('curl -L https://github.com/PikoClaw/PikoClaw/releases/latest/download/pikoclaw-linux-x86_64 -o pikoclaw\nchmod +x pikoclaw\nsudo mv pikoclaw /usr/local/bin/\nexport ANTHROPIC_API_KEY=sk-ant-...\npikoclaw', this)" class="copy-btn text-zinc-500 hover:text-zinc-300 transition-colors" title="Copy">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                    </div>
                     <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Download and install</span>
 curl -L https://github.com/PikoClaw/PikoClaw/releases/latest/download/pikoclaw-linux-x86_64 -o pikoclaw
 chmod +x pikoclaw
@@ -414,6 +447,12 @@ pikoclaw</code></pre>
 
             <div id="windows" class="tab-content">
                 <div class="code-block rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-zinc-500 font-mono">Windows</span>
+                        <button onclick="copyToClipboard('curl -L https://github.com/PikoClaw/PikoClaw/releases/latest/download/pikoclaw-windows-x86_64.exe -o pikoclaw.exe\nMove-Item pikoclaw-windows-x86_64.exe "$env:USERPROFILE\\bin\\pikoclaw.exe"\n$env:ANTHROPIC_API_KEY="sk-ant-..."\npikoclaw', this)" class="copy-btn text-zinc-500 hover:text-zinc-300 transition-colors" title="Copy">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                    </div>
                     <pre class="text-sm font-mono leading-relaxed"><code class="text-zinc-300"><span class="text-zinc-500"># Download from GitHub Releases</span>
 <span class="text-zinc-500"># https://github.com/PikoClaw/PikoClaw/releases</span>
 
@@ -523,6 +562,23 @@ pikoclaw</code></pre>
     </footer>
 
     <script>
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Store original icon
+                const originalIcon = button.innerHTML;
+                
+                // Show checkmark
+                button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                button.classList.add('copied');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
         function showTab(platform) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
